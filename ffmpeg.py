@@ -20,6 +20,7 @@ if os.path.isfile(general_config_path):
     try:
         with open(general_config_path, mode = 'r') as file:
             general_config = yaml.load(file, Loader=yaml.FullLoader)
+            print('loaded general configuration')
     except:
         print('WARN :: Could not open general config file', general_config_path, 'using default options')
         general_config = {
@@ -45,6 +46,7 @@ if os.path.isfile('config.yml'):
     try:
         with open(r'./config.yml') as file:
             list = yaml.load(file, Loader=yaml.FullLoader)
+            print('Loaded directory config')
     except:
         print('Error reading config.yml, not really a yml file?')
 else:
@@ -55,23 +57,53 @@ else:
         list[file] = None
 
 for ix in list:
+    print('')
+    print('')
+    print('')
+    print('')
+    print('[Start of %s]' % ix)
+    print('')
     if not os.path.isfile(ix):
-        print('Error... file {0} doesn\'t exist on this directory')
+        print('WARN :: file {0} doesn\'t exist on this directory'.format(ix))
+        continue
+    # print('Processing {0}'.format(ix))
     el = list[ix]
+    # output file name
+    name = ix.replace(general_config['inputExtension'], general_config['outputExtension'])
     prefix = ''
     suffix = ''
-    print(ix, el)
-    if 'start' in el:
-        prefix = '-ss {0}'.format(el['start'])
-        if ('end' in el):
-            FMT = '%H:%M:%S'
-            tdelta = datetime.strptime(el['end'], FMT) - datetime.strptime(el['start'], FMT)
-            # calculate end for ffmpeg based on start
-            suffix = '-t {0}'.format(tdelta)
-    elif ('end' in el):
-        suffix = '-t {0}'.format(el['end'])
-    cmd = '{0} {1} -i {2} -c:v {3} {4} {5}'
-    cmd = cmd.format(general_config['logLevel'], prefix, ix, general_config['flags'], suffix, ix.replace(general_config['inputExtension'], general_config['outputExtension']))
-    # print('ffmpeg', cmd)
-    subprocess.run(['ffmpeg', cmd])
+    if el is not None:
+        if 'name' in el:
+            name = "{1}-{0}".format(el['name'], name)
+        if 'start' in el:
+            prefix = '-ss {0}'.format(el['start'])
+            if ('end' in el):
+                FMT = '%H:%M:%S'
+                tdelta = datetime.strptime(el['end'], FMT) - datetime.strptime(el['start'], FMT)
+                # calculate end for ffmpeg based on start
+                suffix = '-t {0}'.format(tdelta)
+        elif ('end' in el):
+            suffix = '-t {0}'.format(el['end'])
+    cmd = 'ffmpeg {0} {1} -i {2} {3} {4} {5}'
+    cmd = cmd.format(general_config['logLevel'], prefix, ix, general_config['flags'], suffix, name)
+    if os.path.isfile(name):
+        print('File %s already exists in directory, skipping...' % name)
+    else:
+        print('ffmpeg', cmd)
+        print('')
+        print('')
+        print('')
+        subprocess.run(cmd, shell=True)
+        #try:
+        #    result
+        #    with open("ffmepg_log.txt", 'w') as text_file:
+        #        text_file.write(resut.stdout)
+        #    with open("ffmepg_error.txt", 'w') as text_file:
+        #        text_file.write(resut.stderr)
+        #except NameError:
+        #    pass
+        #    # do nothing
+    print('')
+    print('-------------------------------------------------------------------------------------------')
+
 
