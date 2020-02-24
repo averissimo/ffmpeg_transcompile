@@ -61,7 +61,7 @@ for ix in list:
     print('')
     print('')
     print('')
-    print('[Start of %s]' % ix)
+    print('INFO:: Start of %s' % ix)
     print('')
     if not os.path.isfile(ix):
         print('WARN :: file {0} doesn\'t exist on this directory'.format(ix))
@@ -87,11 +87,11 @@ for ix in list:
     cmd = 'ffmpeg {0} {1} -i {2} {3} {4} {5}'
     cmd = cmd.format(general_config['logLevel'], prefix, ix, general_config['flags'], suffix, name)
     if os.path.isfile(name):
-        print('File %s already exists in directory, skipping...' % name)
+        print('INFO:: File %s already exists in directory, skipping...' % name)
     else:
-        print('ffmpeg', cmd)
+        print('$ ffmpeg', cmd)
         print('')
-        print('')
+        print('(output of ffmpeg)')
         print('')
         subprocess.run(cmd, shell=True)
         #try:
@@ -104,6 +104,6 @@ for ix in list:
         #    pass
         #    # do nothing
     print('')
-    print('-------------------------------------------------------------------------------------------')
+    print('-- end of ffmpeg -----------------------------------------------------------------------------------------')
 
 
