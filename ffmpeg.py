@@ -136,7 +136,7 @@ for ix in list:
                 tdelta = datetime.utcfromtimestamp(duration) - datetime.strptime(el['start'], FMT)
                 tdelta_str = str(tdelta)
             
-
+        # when it only has end parameter
         elif ('end' in el):
             print('     custom end at: %s' % el['end'])
             suffix = '-t {0}'.format(el['end'])
@@ -144,14 +144,18 @@ for ix in list:
             temp = time.strptime(el['end'], FMT)
             tdelta = timedelta(hours = temp.tm_hour, minutes = temp.tm_min, seconds = temp.tm_sec)
             tdelta_str = str(tdelta)
+
+        # calculate auxiliar info when no custom start or end parameter exist
         else:
             tdelta = datetime.utcfromtimestamp(duration) - datetime.utcfromtimestamp(0)
             tdelta_str = str(tdelta)
+
+    # calculate auxiliar info when no custom start or end parameter exist
     else:
         tdelta = datetime.utcfromtimestamp(duration) - datetime.utcfromtimestamp(0)
         tdelta_str = str(tdelta)
 
-    # adds extension
+    # adds extension to output file name
     name = '{0}{1}'.format(name, general_config['outputExtension'])
    
     print('     output file will be called: %s' % name)
@@ -160,21 +164,21 @@ for ix in list:
     print('      seconds: {0}'.format(tdelta.total_seconds()))
     print('       frames: {0}'.format(tdelta.total_seconds() * framerate))
             
-    # builds command
+    # builds ffmpeg command
     cmd = 'ffmpeg {0} {1} -i "{2}" {3} {4} "{5}"'
     cmd = cmd.format(general_config['logLevel'], prefix, ix, general_config['flags'], suffix, name)
     
     print('')
     print('INFO:: ffmpeg command')
     print('')
-    print('    $ ', cmd)
+    print('$ ', cmd)
     print('')
 
     # check if file already exists, if so, it skips it
     if os.path.isfile(name):
-        print('INFO:: File %s already exists in directory, skipping...' % name)  
+        print('WARN:: File %s already exists in directory, skipping...' % name)  
 
-        print('INFO:: Metadata of existing file:')
+        print('WARN:: Metadata of existing file:')
         print('    Duration of video:')
 
         duration = get_length(name)
@@ -186,7 +190,7 @@ for ix in list:
         print('     Framerate: %f' % framerate)
         print('')
     else:
-        print('(output of ffmpeg)')
+        print('INFO:: output of ffmpeg')
         print('')
         subprocess.run(cmd, shell=True)
         #try:
