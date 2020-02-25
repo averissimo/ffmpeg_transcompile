@@ -16,6 +16,8 @@ Allows to have per-directory options when a `config.yml` file is present. When i
 * `start`: starting position, if not supplied, the same start of input will be used
 * `end`: end position in `HH:MM:SS` *(hours:minutes:seconds)* as absolute values, not relative to the start position *(when supplied)*.
     * This is different from `-t` option in ffmepg as the tool will calculate the relative time when `start` is also supplied.
+* `rotate`: rotation of video. Available options are: `90`, `180`, `270` _(or `-90`)_
+    * Use right hand to figure out rotation or think of it as counter clockwise
 
 Example of a valid `config.yml` file with all combinations:
 
