@@ -21,6 +21,23 @@ general_config_path = os.path.join(os.path.dirname(__file__), 'ffmpeg_python.yml
 # duration in ffmpeg format hours:minutes:seconds
 FMT = '%H:%M:%S'
 
+warnings=[]
+
+existing_files={}
+
+def warn(*args, prefix=""):
+    tmp_str = " ".join(args)
+    warnings.append(tmp_str)
+    print(prefix + 'WARN::', tmp_str)
+
+def print_warnings():
+    if len(warnings) == 0:
+        return
+    print('')
+    print('Warnings::')
+    for el in warnings:
+        print('  * ' + el)
+
 #
 # Function to get number of seconds of input
 def get_length(filename):
@@ -57,7 +74,8 @@ if os.path.isfile(general_config_path):
             general_config = yaml.load(file, Loader=yaml.FullLoader)
             print('loaded general configuration')
     except:
-        print('WARN :: Could not open general config file', general_config_path, 'using default options')
+        warn('Could not open general config file ', general_config_path, 'using default options')
+
         general_config = {
                 'flags': '-c:v libx265 -c:a aac -b:a 192k -preset slow -crf 15',
                 'lookupMedia': 'MVI_*.MOV',
@@ -93,7 +111,7 @@ else:
 
 for ix in list:
     if not os.path.isfile(ix):
-        print('WARN :: input file {0} doesn\'t exist on this directory'.format(ix))
+        warn('input file "{0}" doesn\'t exist on this directory'.format(ix))
         continue
     
     print('')
@@ -110,8 +128,12 @@ for ix in list:
     framerate = frames / duration
     print('    * timestamp: %s' % datetime.utcfromtimestamp(duration).strftime(FMT))
     print('    *   seconds: %s' % duration)
-    print('    *    frames: %s' % frames)
-    print('    * framerate: %f' % framerate)
+    if frames > 0:
+        print('    *    frames: %s' % frames)
+        print('    * framerate: %f' % framerate)
+    else:
+        print('    *    frames: n/a')
+        print('    * framerate: n/a')
     print('')
 
     
@@ -133,12 +155,14 @@ for ix in list:
             suffix = '{0} {1}'.format(suffix, el['options'])
 
         if 'rotate' in el:
-            if el['rotate'] == '90':
+            if el['rotate'] == 90:
                 suffix = '{0} -vf "transpose=2"'.format(suffix)
-            elif el['rotate'] == '180':
+            elif el['rotate'] == 180:
                 suffix = '{0} -vf "transpose=2,transpose=2"'.format(suffix)
-            elif el['rotate'] == '270' or el['rotate'] == '-90':
+            elif el['rotate'] == 270 or el['rotate'] == -90:
                 suffix = '{0} -vf "transpose=1"'.format(suffix)
+            else:
+                warn('rotate option "%s" not recognized' % el['rotate'])
 
         # check if it has start/end parameters
         if 'start' in el:
@@ -181,7 +205,8 @@ for ix in list:
     print('')
     print('     duration: {0}'.format(tdelta_str))
     print('      seconds: {0}'.format(tdelta.total_seconds()))
-    print('       frames: {0}'.format(tdelta.total_seconds() * framerate))
+    if framerate > 0:
+        print('       frames: {0}'.format(tdelta.total_seconds() * framerate))
             
     # builds ffmpeg command
     cmd = 'ffmpeg {0} {1} -i "{2}" {3} {4} "{5}"'
@@ -194,18 +219,24 @@ for ix in list:
         print('  INFO:: File %s already exists in directory, skipping...' % name)  
         print('')
 
-        duration = get_length(name)
-        frames = get_frames(name)
-        framerate = frames / duration
-        
-        if frames == -1:
-            print('  WARN:: invalid movie file, can\'t extract metadata')
+        duration2 = get_length(name)
+        frames2 = get_frames(name)
+        framerate2 = frames2 / duration2
+        timestamp2 = datetime.utcfromtimestamp(duration2).strftime(FMT)
+        if frames2 == -1:
+            warn('invalid movie file "%s", can\'t extract metadata' % name, prefix='  ')
         else:
-            print('  WARN:: Metadata of existing file:')
-            print('    * timestamp: %s' % datetime.utcfromtimestamp(duration).strftime(FMT))
-            print('    *   seconds: %s' % duration)
-            print('    *    frames: %s' % frames)
-            print('    * framerate: %f' % framerate)
+            print('  INFO:: Metadata of existing file:')
+            print('    * timestamp: %s' % timestamp2)
+            print('    *   seconds: %s' % duration2)
+            print('    *    frames: %s' % frames2)
+            if framerate > 0:
+                print('    * framerate: %f' % framerate2)
+            existing_files[name] = {
+                'timestamp': str(tdelta_str) + " - " + str(timestamp2), 
+                'seconds': str(tdelta.total_seconds()) + " - " + str(duration2),
+                'framerate': str(framerate) + ' - ' + str(framerate2)
+            }
         print('')
     else:
         print('')
@@ -228,4 +259,16 @@ for ix in list:
     print('')
     print('-- end of %s -----------------------------------------------------------------------------------------' % ix)
 
+if len(existing_files) > 0:
+    print('')
+    print('')
+    print('Some output files already existed (%d)' % len(existing_files))
+    for key in existing_files:
+        print('')
+        print('  [{0}]'.format(key))
+        print('    * timestamp: {0}'.format(existing_files[key]['timestamp']))
+        print('    * seconds: {0}'.format(existing_files[key]['seconds']))
+        if framerate > 0:
+            print('    * framerate: {0}'.format(existing_files[key]['framerate']))
 
+print_warnings()
