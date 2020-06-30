@@ -72,7 +72,7 @@ if os.path.isfile(general_config_path):
     try:
         with open(general_config_path, mode = 'r') as file:
             general_config = yaml.load(file, Loader=yaml.FullLoader)
-            print('loaded general configuration')
+            # print('loaded general configuration')
     except:
         warn('Could not open general config file ', general_config_path, 'using default options')
 
@@ -81,13 +81,14 @@ if os.path.isfile(general_config_path):
                 'lookupMedia': 'MVI_*.MOV',
                 'inputExtension': '.MOV',
                 'outputExtension': '.mp4',
+                'inputFlags': '',
                 'logLevel': '-loglevel repeat+level+info'
         }
 
 # Folder-level configuration
 #  Allows to define which files to convert with
 #  start and end times (both absolute)
-# 
+#
 # Example:
 # <file name>:
 #   start: <starting time in HH:MM:SS - hours:minutes:seconds>
@@ -98,29 +99,41 @@ if os.path.isfile(general_config_path):
 if os.path.isfile('config.yml'):
     try:
         with open(r'./config.yml') as file:
-            list = yaml.load(file, Loader=yaml.FullLoader)
+            listRaw = yaml.load(file, Loader=yaml.FullLoader)
+            list = {}
+            for key in listRaw:
+                if listRaw[key] is None:
+                    list[key] = None
+                else:
+                    list[key] = {k: v for k, v in listRaw[key].items() if v is not None}
             print('Loaded directory config')
     except:
         print('Error reading config.yml, not really a yml file?')
 else:
     fileset = glob.glob(general_config['lookupMedia'])
-    
+
     list = {}
     for file in fileset:
-        list[file] = None
+        list[file] = {'start': None, 'end': None, 'rotate': None, 'options': None, 'suffix': None}
+
+    with open('config.yml', 'w') as outfile:
+        yaml.dump(list, outfile, default_flow_style=False)
+    print('Writen config.yml, please make the optional changes to the file and run again.')
+    print('  files in config.yml:\n    - {}'.format('\n    - '.join(fileset)))
+    exit()
 
 for ix in list:
     if not os.path.isfile(ix):
         warn('input file "{0}" doesn\'t exist on this directory'.format(ix))
         continue
-    
+
     print('')
     print('')
     print('')
     print('')
     print('INFO:: Start of %s' % ix)
     print('')
-        
+
     print('  INFO:: Metadata:')
 
     duration = get_length(ix)
@@ -136,20 +149,20 @@ for ix in list:
         print('    * framerate: n/a')
     print('')
 
-    
+
     # print('Processing {0}'.format(ix))
     el = list[ix]
     # output file name
     name = ix.replace(general_config['inputExtension'], '')
-    prefix = ''
+    prefix = general_config['inputFlags']
     suffix = ''
 
     print('  INFO:: Output parameters')
     if el is not None:
         # custom suffix to add to output file
-        if 'name' in el:
-            name = "{0}-{1}".format(name, el['name'])
-        
+        if 'suffix' in el:
+            name = "{0}-{1}".format(name, el['suffix'])
+
         # Add specific options
         if 'options' in el:
             suffix = '{0} {1}'.format(suffix, el['options'])
@@ -166,7 +179,7 @@ for ix in list:
 
         # check if it has start/end parameters
         if 'start' in el:
-            prefix = '-ss {0}'.format(el['start'])
+            prefix = '{} -ss {}'.format(prefix, el['start'])
             print('     custom start at: %s' % el['start'])
             # if it also has end parameter, calculate difference in times
             if ('end' in el):
@@ -178,12 +191,12 @@ for ix in list:
             else:
                 tdelta = datetime.utcfromtimestamp(duration) - datetime.strptime(el['start'], FMT)
                 tdelta_str = str(tdelta)
-            
+
         # when it only has end parameter
         elif ('end' in el):
             print('     custom end at: %s' % el['end'])
             suffix = '{0} -t {1}'.format(suffix, el['end'])
-            
+
             temp = time.strptime(el['end'], FMT)
             tdelta = timedelta(hours = temp.tm_hour, minutes = temp.tm_min, seconds = temp.tm_sec)
             tdelta_str = str(tdelta)
@@ -200,23 +213,23 @@ for ix in list:
 
     # adds extension to output file name
     name = '{0}{1}'.format(name, general_config['outputExtension'])
-   
+
     print('     output file will be called: %s' % name)
     print('')
     print('     duration: {0}'.format(tdelta_str))
     print('      seconds: {0}'.format(tdelta.total_seconds()))
     if framerate > 0:
         print('       frames: {0}'.format(tdelta.total_seconds() * framerate))
-            
+
     # builds ffmpeg command
     cmd = 'ffmpeg {0} {1} -i "{2}" {3} {4} "{5}"'
     cmd = cmd.format(general_config['logLevel'], prefix, ix, general_config['flags'], suffix, name)
-    
+
     print('')
 
     # check if file already exists, if so, it skips it
     if os.path.isfile(name):
-        print('  INFO:: File %s already exists in directory, skipping...' % name)  
+        print('  INFO:: File %s already exists in directory, skipping...' % name)
         print('')
 
         duration2 = get_length(name)
@@ -233,7 +246,7 @@ for ix in list:
             if framerate > 0:
                 print('    * framerate: %f' % framerate2)
             existing_files[name] = {
-                'timestamp': str(tdelta_str) + " - " + str(timestamp2), 
+                'timestamp': str(tdelta_str) + " - " + str(timestamp2),
                 'seconds': str(tdelta.total_seconds()) + " - " + str(duration2),
                 'framerate': str(framerate) + ' - ' + str(framerate2)
             }
@@ -255,7 +268,7 @@ for ix in list:
         #except NameError:
         #    pass
         #    # do nothing
-    
+
     print('')
     print('-- end of %s -----------------------------------------------------------------------------------------' % ix)
 

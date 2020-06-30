@@ -12,7 +12,7 @@ General options for the tool are defined in `ffmpeg_python.yml` file available i
 
 Allows to have per-directory options when a `config.yml` file is present. When it's present it will only convert the files declared in it. Possible options are
 
-* `name`: output name, it will show as `<original name>-<name>.mp4`
+* `suffix`: output name, it will show as `<original name>-<name>.mp4`
 * `start`: starting position, if not supplied, the same start of input will be used
 * `end`: end position in `HH:MM:SS` *(hours:minutes:seconds)* as absolute values, not relative to the start position *(when supplied)*.
     * This is different from `-t` option in ffmepg as the tool will calculate the relative time when `start` is also supplied.

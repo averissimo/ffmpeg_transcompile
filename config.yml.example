@@ -1,5 +1,7 @@
 MVI_5086.MOV:
-  start: "00:07:32"
+  start: 00:07:32
+  suffix: yada
+  rotate: 90
 MVI_5087.MOV:
   start: "00:01:34"
 MVI_5088.MOV:

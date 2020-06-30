@@ -1,5 +1,6 @@
-flags: "-c:v libx265 -c:a aac -b:a 192k -preset slow -crf 15"
-lookupMedia: "MVI_*.MOV"
+flags: "-c:v libx265 -c:a aac -b:a 192k -crf 20"
+lookupMedia: "*.MOV"
 inputExtension: ".MOV"
 outputExtension: ".mp4"
 logLevel: "-loglevel repeat+level+info"
+inputFlags: "-hwaccel cuda"
