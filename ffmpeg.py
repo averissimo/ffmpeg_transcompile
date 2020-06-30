@@ -5,6 +5,7 @@ import glob
 from datetime import datetime, timedelta
 import subprocess
 import time
+from collections import UserDict
 
 # Load general configuration
 #  should have the ffmpeg_python.yml file in the same directory as this file
@@ -115,9 +116,9 @@ else:
     list = {}
     for file in fileset:
         list[file] = {'start': None, 'end': None, 'rotate': None, 'options': None, 'suffix': None}
-
+    print(list)
     with open('config.yml', 'w') as outfile:
-        yaml.dump(list, outfile, default_flow_style=False)
+        yaml.dump(list, outfile, default_flow_style=False, Dumper=yaml.CDumper, sort_keys = False)
     print('Writen config.yml, please make the optional changes to the file and run again.')
     print('  files in config.yml:\n    - {}'.format('\n    - '.join(fileset)))
     exit()
