@@ -1,4 +1,5 @@
-flags: "-c:v libx265 -c:a aac -b:a 192k -crf 20"
+flags: "-c:v libx265 -c:a aac -b:a 192k"
+#flags: "-c:v vp9 -c:a aac -b:a 192k -crf 31 -b:v 0"
 lookupMedia: "*.MOV"
 inputExtension: ".MOV"
 outputExtension: ".mp4"
