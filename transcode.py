@@ -7,7 +7,6 @@ import time
 import re
 
 
-
 class Video:
     def __init__(self, path):
         self._path = path
@@ -104,6 +103,11 @@ class VideoConfig(Video):
                 config["end"] = Video.parse_duration(config["end"])
             self._opts = config
 
+        if "force_copy" in options and options["force_copy"]:
+            self._opts["codec_video"] = options['codec_video']
+            self._opts["codec_audio"] = options['codec_audio']
+
+        self._path = path
         self._name = path.replace(options['inputExtension'], '')
 
     @property
@@ -172,6 +176,9 @@ class VideoConfig(Video):
         else:
             return self._name
 
+    @property
+    def path(self):
+        return self._path
 
 class Transcode:
     """
@@ -188,16 +195,23 @@ class Transcode:
     }
 
     CONFIG_FILE = "./config.yml"
-
+    GENERAL_CONFIG_FILE = "ffmpeg_python.yml"
     FMT = '%H:%M:%S.%f'
 
     def __init__(self, opts=None):
         if opts is None:
-            self._opts = self.OPTS
+            general_config_path = os.path.join(os.path.dirname(__file__), self.GENERAL_CONFIG_FILE)
+            if os.path.isfile(general_config_path):
+                with open(general_config_path, 'r') as file:
+                    default_opts = yaml.load(file, Loader=yaml.FullLoader)
+                print(f"opts: {default_opts}")
+                self._opts = default_opts
+            else:
+                self._opts = self.OPTS
         else:
             self._opts = opts
 
-        self._force_copy = False
+        self._opts["force_copy"] = False
 
         self._warnings = []
 
@@ -210,7 +224,7 @@ class Transcode:
 
     def set_copy(self):
         self.set_codec("-c:v copy", "-c:a copy")
-        self._force_copy = True
+        self._opts["force_copy"] = True
 
     def print_warnings(self):
         if len(self._warnings) == 0:
@@ -255,7 +269,7 @@ class Transcode:
                 print('Error reading config.yml, not really a yml file?')
                 raise(e)
 
-            if self._force_copy:
+            if "force_copy" in self._opts and self._opts["force_copy"]:
                 print("")
                 print("")
                 print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
@@ -275,7 +289,7 @@ class Transcode:
         existing_files = {}
         v: VideoConfig
         for v in files:
-            if not os.path.isfile(v.name):
+            if not os.path.isfile(v.path):
                 self.warn(f"input file \"{v.name}\" doesn't exist on this directory")
                 continue
 
@@ -341,20 +355,20 @@ class Transcode:
             prefix_str: str = " ".join(prefix)
             suffix_str: str = " ".join(suffix)
             # builds ffmpeg command
-            cmd = f'ffmpeg {self._opts["logLevel"]} {prefix_str} -i "{v.name}" {v.video} {v.audio} {suffix_str} "{name}"'
+            cmd = f'ffmpeg {self._opts["logLevel"]} {prefix_str} -i "{v.path}" {v.video} {v.audio} {suffix_str} "{name}"'
 
             # check if file already exists, if so, it skips it
             if os.path.isfile(name):
                 print('')
                 print('  INFO:: File %s already exists in directory, skipping...' % name)
                 print('')
-                v2 = Video(name)
+                v2 = Video(v.path)
                 duration2 = v2.get_length()
                 frames2 = v2.get_frames()
                 frame_rate2 = frames2 / duration2
                 timestamp2 = Video.parse_seconds(duration2).strftime(self.FMT)
                 if frames2 == -1:
-                    self.warn('invalid movie file "%s", can\'t extract metadata' % name, prefix='  ')
+                    self.warn('invalid movie file "%s", can\'t extract metadata' % v.path, prefix='  ')
                 else:
                     print('  INFO:: Metadata of existing file:')
                     print('    * timestamp: %s' % timestamp2)
