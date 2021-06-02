@@ -103,12 +103,12 @@ class VideoConfig(Video):
                 config["end"] = Video.parse_duration(config["end"])
             self._opts = config
 
-        if "force_copy" in options and options["force_copy"]:
-            self._opts["codec_video"] = options['codec_video']
-            self._opts["codec_audio"] = options['codec_audio']
-
         self._path = path
         self._name = path.replace(options['inputExtension'], '')
+
+    def set_copy_codecs(self):
+        self._opts["codec_video"] = "-c:v copy"
+        self._opts["codec_audio"] = "-c:a copy"
 
     @property
     def video(self):
@@ -210,7 +210,7 @@ class Transcode:
         else:
             self._opts = opts
 
-        self._opts["force_copy"] = False
+        self._force_copy = False
 
         self._warnings = []
 
@@ -222,8 +222,7 @@ class Transcode:
             self._opts["codec_audio"] = audio
 
     def set_copy(self):
-        self.set_codec("-c:v copy", "-c:a copy")
-        self._opts["force_copy"] = True
+        self._force_copy = True
 
     def print_warnings(self):
         if len(self._warnings) == 0:
@@ -266,17 +265,6 @@ class Transcode:
                     print('Loaded directory config')
             except Exception as e:
                 print('Error reading config.yml, not really a yml file?')
-                raise(e)
-
-            if "force_copy" in self._opts and self._opts["force_copy"]:
-                print("")
-                print("")
-                print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
-                print(f"        waiting 5 seconds before advancing, press ctrl+c to stop.")
-                for ix in range(5):
-                    print(f"{5 - ix}")
-                    time.sleep(1)
-                print(f"Starting...")
         else:
             files = self.build_config_from_scratch()
             exit(0)
@@ -291,6 +279,17 @@ class Transcode:
             if not os.path.isfile(v.path):
                 self.warn(f"input file \"{v.name}\" doesn't exist on this directory")
                 continue
+
+            if self._force_copy:
+                v.set_copy_codecs()
+                print("")
+                print("")
+                print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
+                print(f"        waiting 5 seconds before advancing, press ctrl+c to stop.")
+                for ix in range(5):
+                    print(f"{5 - ix}")
+                    time.sleep(1)
+                print(f"Starting...")
 
             print('')
             print('')
