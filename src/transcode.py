@@ -200,7 +200,7 @@ class Transcode:
 
     def __init__(self, opts=None):
         if opts is None:
-            general_config_path = os.path.join(os.path.dirname(__file__), self.GENERAL_CONFIG_FILE)
+            general_config_path = os.path.join(os.path.dirname(__file__), '..', 'etc', self.GENERAL_CONFIG_FILE)
             if os.path.isfile(general_config_path):
                 with open(general_config_path, 'r') as file:
                     default_opts = yaml.load(file, Loader=yaml.FullLoader)
