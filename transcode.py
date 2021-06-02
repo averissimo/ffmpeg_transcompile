@@ -92,7 +92,7 @@ class VideoConfig(Video):
                 'end': self.get_length(),
                 'rotate': 0,
                 'options': '',
-                'suffix': '',
+                'suffix': options['outputExtension'],
                 'codec_video': options['codec_video'],
                 'codec_audio': options['codec_audio']
             }
@@ -104,7 +104,7 @@ class VideoConfig(Video):
             self._opts = config
 
         self._path = path
-        self._name = path.replace(options['inputExtension'], '')
+        self._name = re.sub(options['inputExtension'], '', path)
 
     def set_copy_codecs(self):
         self._opts["codec_video"] = "-c:v copy"
@@ -172,7 +172,7 @@ class VideoConfig(Video):
     @property
     def name(self):
         if "suffix" in self._opts and self._opts['suffix'].strip() != "":
-            return f"{self._name.decode('utf8')}-{self._opts['suffix'].strip()}"
+            return f"{self._name}{self._opts['suffix'].strip()}"
         else:
             return self._name
 
@@ -188,7 +188,7 @@ class Transcode:
         'codec_video': '-c:v libx265 -preset slow -crf 15',
         'codec_audio': '-c:a aac -b:a 192k',
         'lookupMedia': '*.mp4',
-        'inputExtension': '.MOV',
+        'inputExtension': '.mp4$',
         'outputExtension': '-converted.mp4',
         'additionFlags': '-hwaccel cuda',
         'logLevel': '-loglevel repeat+level+info'
@@ -274,6 +274,17 @@ class Transcode:
         files = self.build_config()
 
         existing_files = {}
+
+        if self._force_copy:
+            print("")
+            print("")
+            print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
+            print(f"        waiting 5 seconds before advancing, press ctrl+c to stop.")
+            for ix in range(5):
+                print(f"{5 - ix}")
+                time.sleep(1)
+            print(f"Starting...")
+
         v: VideoConfig
         for v in files:
             if not os.path.isfile(v.path):
@@ -282,14 +293,6 @@ class Transcode:
 
             if self._force_copy:
                 v.set_copy_codecs()
-                print("")
-                print("")
-                print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
-                print(f"        waiting 5 seconds before advancing, press ctrl+c to stop.")
-                for ix in range(5):
-                    print(f"{5 - ix}")
-                    time.sleep(1)
-                print(f"Starting...")
 
             print('')
             print('')
@@ -339,9 +342,6 @@ class Transcode:
             if v.start != 0:
                 print(f'     custom start at: {v.start}')
             suffix.append(f'-t {tdelta}')
-
-            # adds extension to output file name
-            name = '{0}{1}'.format(name, self._opts['outputExtension'])
 
             print('     output file will be called: %s' % name)
             print('')
