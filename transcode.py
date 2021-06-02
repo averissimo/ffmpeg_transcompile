@@ -204,7 +204,6 @@ class Transcode:
             if os.path.isfile(general_config_path):
                 with open(general_config_path, 'r') as file:
                     default_opts = yaml.load(file, Loader=yaml.FullLoader)
-                print(f"opts: {default_opts}")
                 self._opts = default_opts
             else:
                 self._opts = self.OPTS

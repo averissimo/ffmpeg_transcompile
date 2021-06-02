@@ -10,7 +10,8 @@ When running without `config.yml` file in the directory, the tool will generate 
 
 General options for the tool are defined in `ffmpeg_python.yml` file available in the repository. with possible options:
 
-* `flags`: ffmpeg codec and other intermediate options
+* `codec_video`: ffmpeg video codec and other intermediate options
+* `code_audio`: ffmpeg audio codec and other intermediate options
 * `lookupMedia`: filter files in directory to be transcoded
 * `inputExtension`: extension of input files
 * `outputExtension`: extension of output files
@@ -24,6 +25,7 @@ Allows to have per-directory options when a `config.yml` file is present. When i
 * `start`: starting position, if not supplied, the same start of input will be used
 * `end`: end position in `HH:MM:SS` *(hours:minutes:seconds)* as absolute values, not relative to the start position *(when supplied)*.
     * This is different from `-t` option in ffmepg as the tool will calculate the relative time when `start` is also supplied.
+    * It can also be `HH:MM:SS.ms`, where ms is the microsecond or an number representing the absolute seconds _(61 would be `00:01:01`)_.
 * `rotate`: rotation of video. Available options are: `90`, `180`, `270` _(or `-90`)_
     * Use right hand to figure out rotation or think of it as counter clockwise
 
@@ -32,14 +34,28 @@ Allows to have per-directory options when a `config.yml` file is present. When i
 Example of a valid `config.yml` file with all combinations:
 
 ```
-MVI_5086.MOV:
-  start: 00:07:32
-  suffix: 'whatever'
-  rotate: 90
-  options: '-nostats'
-MVI_5090.MOV:
-  end: "00:04:47"
-MVI_5115.MOV:
-  start: "00:03:18"
-  end: "00:05:51"
+- name: one.mp4
+  start: 00:00:00
+  end: '00:00:16.454922'
+  rotate: 0
+  options: ''
+  suffix: ''
+  codec_video: -c:v copy
+  codec_audio: -c:a copy
+- name: two.mp4
+  start: 00:00:00
+  end: '00:00:44.111978'
+  rotate: 0
+  options: ''
+  suffix: ''
+  codec_video: -c:v copy
+  codec_audio: -c:a copy
+- name: third movie.mp4
+  start: 00:00:00
+  end: '00:00:06'
+  rotate: 0
+  options: ''
+  suffix: ''
+  codec_video: -c:v copy
+  codec_audio: -c:a copy
 ```
