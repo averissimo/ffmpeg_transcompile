@@ -106,9 +106,9 @@ class VideoConfig(Video):
         self._path = path
         self._name = re.sub(options['inputExtension'], '', path)
 
-    def set_copy_codecs(self):
-        self._opts["codec_video"] = "-c:v copy"
-        self._opts["codec_audio"] = "-c:a copy"
+    def set_codecs(self, video="-c:v copy", audio="-c:a copy"):
+        self._opts["codec_video"] = video
+        self._opts["codec_audio"] = audio
 
     @property
     def video(self):
@@ -164,7 +164,7 @@ class VideoConfig(Video):
         if "end" in self._opts:
             return self._opts["end"]
         else:
-            self.get_length()
+           return self.get_length()
 
     def __repr__(self):
         return f"VideoConfig(path: {self.path}, opts: {self._opts})"
@@ -179,6 +179,17 @@ class VideoConfig(Video):
     @property
     def path(self):
         return self._path
+
+    def set_suffix(self, new_suffix):
+        self._opts["suffix"] = new_suffix
+
+    @property
+    def suffix(self):
+        if "suffix" in self._opts:
+            return self._opts["suffix"]
+        else:
+            return Transcode.OPTS["outputExtension"]
+
 
 class Transcode:
     """
@@ -211,8 +222,13 @@ class Transcode:
             self._opts = opts
 
         self._force_copy = False
+        self._force_suffix = False
 
         self._warnings = []
+
+    def set_suffix(self, new_suffix):
+        self._opts["outputExtension"] = new_suffix
+        self._force_suffix = True
 
     def set_codec(self, video=None, audio=None):
         if video is not None:
@@ -221,8 +237,11 @@ class Transcode:
         if audio is not None:
             self._opts["codec_audio"] = audio
 
+        self._force_copy = True
+
     def set_copy(self):
         self._force_copy = True
+        self.set_codec()
 
     def print_warnings(self):
         if len(self._warnings) == 0:
@@ -278,7 +297,11 @@ class Transcode:
         if self._force_copy:
             print("")
             print("")
-            print(f"WARNING:: Force copy was activated (--copy), all operations will overwrite codecs and copy originals")
+            print(f"WARNING:: Force codec was activated (--copy or --prores), all operations will overwrite codecs")
+            print(f"         video: {self._opts['codec_video']}")
+            print(f"         audio: {self._opts['codec_audio']}")
+            print(f"        suffix: {self._opts['outputExtension']}")
+            print('')
             print(f"        waiting 5 seconds before advancing, press ctrl+c to stop.")
             for ix in range(5):
                 print(f"{5 - ix}")
@@ -292,7 +315,10 @@ class Transcode:
                 continue
 
             if self._force_copy:
-                v.set_copy_codecs()
+                v.set_codecs(self._opts['codec_video'], self._opts['codec_audio'])
+
+            if self._force_suffix:
+                v.set_suffix(self._opts['outputExtension'])
 
             print('')
             print('')
