@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser(description='Trancompile video files in current
 parser.add_argument('--copy', help='Use copy codec', action='store_const', const=True)
 
 parser.add_argument('--prores', help='Use prores codec', action='store_const', const=True)
+parser.add_argument('--dnx', help='Use DNxhr codec', action='store_const', const=True)
 parser.add_argument('--vp9', help='Use vp9 codec', action='store_const', const=True)
 
 args = parser.parse_args()
@@ -19,5 +20,8 @@ elif args.prores:
     t.set_suffix('-converted.mov')
 elif args.vp9:
     t.set_codec('-c:v libvpx-vp9 -crf 25 -b:v 0')
+elif args.dnx:
+    t.set_codec('-c:v dnxhd -profile dnxhr_hq', '-c:a pcm_s16le')
+
 
 t.run_cmd()
