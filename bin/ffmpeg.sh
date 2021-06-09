@@ -21,7 +21,8 @@ elif args.prores:
 elif args.vp9:
     t.set_codec('-c:v libvpx-vp9 -crf 25 -b:v 0')
 elif args.dnx:
-    t.set_codec('-c:v dnxhd -profile dnxhr_hq', '-c:a pcm_s16le')
+    t.set_codec('-c:v dnxhd -profile:v dnxhr_hq', '-c:a pcm_s16le')
+    t.set_suffix('-converted.mov')
 
 
 t.run_cmd()
