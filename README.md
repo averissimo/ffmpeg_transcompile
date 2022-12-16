@@ -4,6 +4,16 @@
 
 This tool will transcode the media in the directory where you run it as long as it has a `config.yml` file. If there's no such file it will create one.
 
+### Install
+
+Clone or download this repository and run
+
+```
+$ python setup.py install --user
+```
+
+### Usage
+
 ```
 $ /path/to/bin/ffmpeg.sh # builds config.yml file for files in current directory
 $ /path/to/bin/ffmpeg.sh # converts using the default options
