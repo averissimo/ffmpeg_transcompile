@@ -15,8 +15,8 @@ $ python setup.py install --user
 ### Usage
 
 ```
-$ /path/to/bin/ffmpeg.sh # builds config.yml file for files in current directory
-$ /path/to/bin/ffmpeg.sh # converts using the default options
+$ /path/to/bin/ffmpeg-transcompile.sh # builds config.yml file for files in current directory
+$ /path/to/bin/ffmpeg-transcompile.sh # converts using the default options
 ```
 
 When running without `config.yml` file in the directory, the tool will generate a default one with all files that are follow the `lookupMedia` search and all available options are blank _(and ignored if not changed)_.
@@ -24,7 +24,7 @@ When running without `config.yml` file in the directory, the tool will generate 
 It can also run using `copy`, `prores` or `vp9` codecs _(using a default set of parameters that ignore config.yml codec_video and codec_audio properties)_
 
 ```
-$ /path/to/bin/ffmpeg.sh --prores # converts using the default options (forces the prores codec regardless of config.yml)
+$ /path/to/bin/ffmpeg-compile.sh --prores # converts using the default options (forces the prores codec regardless of config.yml)
 ```
 
 ### Options
