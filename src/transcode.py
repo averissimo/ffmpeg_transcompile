@@ -23,16 +23,18 @@ class Video:
 
         return duration_str
 
-    def get_length(self):
-        result = self.ffprobe('duration', self.path)
+    def get_length(self, mode='stream'):
+        result = self.ffprobe('duration', self.path, mode)
         values = result.stdout.split('\n')
         try:
+            if mode == 'stream' and values[0] == 'N/A':
+                return self.get_length('format')
             return float(values[0])
         except ValueError:
             return -1;
 
     def get_frames(self):
-        result = self.ffprobe('nb_frames', self.path)
+        result = self.ffprobe('nb_frames', self.path, 'stream')
         values = result.stdout.split('\n')
         try:
             return float(values[0])
@@ -70,12 +72,18 @@ class Video:
         return result
 
     @staticmethod
-    def ffprobe(stream, path):
-        cmd = ["ffprobe", "-v", "error",
-               "-select_streams", "v:0",
-               "-show_entries", f"stream={stream}",
-               "-of", "default=noprint_wrappers=1:nokey=1",
-               path]
+    def ffprobe(stream, path, mode):
+        if mode == 'format':
+            cmd = ["ffprobe", "-v", "error",
+                   "-show_entries", f"format={stream}",
+                   "-of", "default=noprint_wrappers=1:nokey=1",
+                   path]
+        else:
+            cmd = ["ffprobe", "-v", "error",
+                   "-select_streams", "v:0",
+                   "-show_entries", f"stream={stream}",
+                   "-of", "default=noprint_wrappers=1:nokey=1",
+                   path]
         return subprocess.run(cmd,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
@@ -198,8 +206,8 @@ class Transcode:
     OPTS = {
         'codec_video': '-c:v libx265 -preset slow -crf 15',
         'codec_audio': '-c:a aac -b:a 192k',
-        'lookupMedia': '*.mp4',
-        'inputExtension': '.mp4$',
+        'lookupMedia': '.*\\.(mp4|mkv)',
+        'inputExtension': '\\.(mp4|mkv)$',
         'outputExtension': '-converted.mp4',
         'additionFlags': '-hwaccel cuda',
         'logLevel': '-loglevel repeat+level+info'
@@ -257,7 +265,7 @@ class Transcode:
         print(prefix + 'WARN::', tmp_str)
 
     def build_config_from_scratch(self):
-        fileset = glob.glob(self._opts['lookupMedia'])
+        fileset = [x for x in os.listdir('.') if re.match(self._opts['lookupMedia'], x)]
 
         print(f'Building "config.yml" from {len(fileset)} files. It can take a bit...')
 
@@ -440,7 +448,3 @@ class Transcode:
                     print('    * framerate: {0}'.format(existing_files[key]['framerate']))
 
         self.print_warnings()
-
-
-
-
